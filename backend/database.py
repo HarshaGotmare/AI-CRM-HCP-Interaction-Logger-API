@@ -35,11 +35,9 @@ Base.metadata.create_all(bind=engine)
 
 # -------- SAVE NEW INTERACTION --------
 def save_interaction(data):
-
     db = SessionLocal()
 
     try:
-
         interaction = Interaction(
             doctor_name=data.get("doctor_name"),
             date=data.get("date"),
@@ -61,12 +59,10 @@ def save_interaction(data):
 
 
 # -------- UPDATE EXISTING INTERACTION --------
-def update_interaction(interaction_id, doctor_name, date, time, topics, sentiment, followup):
-
+def update_interaction(interaction_id, doctor_name, date, time, interaction_type, topics, sentiment, followup):
     db = SessionLocal()
 
     try:
-
         interaction = db.query(Interaction).filter(Interaction.id == interaction_id).first()
 
         if not interaction:
@@ -75,6 +71,7 @@ def update_interaction(interaction_id, doctor_name, date, time, topics, sentimen
         interaction.doctor_name = doctor_name
         interaction.date = date
         interaction.time = time
+        interaction.interaction_type = interaction_type
         interaction.topics = topics
         interaction.sentiment = sentiment
         interaction.followup = followup
@@ -89,17 +86,14 @@ def update_interaction(interaction_id, doctor_name, date, time, topics, sentimen
 
 # -------- GET ALL INTERACTIONS --------
 def get_interactions():
-
     db = SessionLocal()
 
     try:
-
         interactions = db.query(Interaction).all()
 
         result = []
 
         for i in interactions:
-
             result.append({
                 "id": i.id,
                 "doctor_name": i.doctor_name,

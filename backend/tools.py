@@ -17,26 +17,21 @@ if GROQ_API_KEY:
         llm = None
 
 
-# ---------------------------
-# 1️⃣ Summarize Interaction
-# ---------------------------
-def summarize_interaction_tool(text: str):
-
+def summarize_interaction_tool(text: str) -> str:
     text_lower = text.lower()
 
     topic = "General medical discussion"
 
     if "diabetes" in text_lower:
         topic = "Discussion about diabetes medication"
-
     elif "hypertension" in text_lower:
         topic = "Discussion about hypertension treatment"
-
     elif "cholesterol" in text_lower:
         topic = "Discussion about cholesterol medication"
-
-    elif "drug" in text_lower:
-        topic = "Discussion about pharmaceutical drug"
+    elif "cardiology" in text_lower:
+        topic = "Discussion about cardiology treatment"
+    elif "drug" in text_lower or "medicine" in text_lower or "therapy" in text_lower:
+        topic = "Discussion about pharmaceutical treatment"
 
     if "brochure" in text_lower:
         topic += " and product brochure shared"
@@ -47,56 +42,59 @@ def summarize_interaction_tool(text: str):
     return topic
 
 
-# ---------------------------
-# 2️⃣ Sentiment Analysis
-# ---------------------------
-def sentiment_analysis_tool(text: str):
-
+def sentiment_analysis_tool(text: str) -> str:
     text_lower = text.lower()
 
-    positive_words = ["positive", "interested", "interest", "liked", "good response"]
-    negative_words = ["negative", "not interested", "declined", "rejected"]
+    positive_words = [
+        "positive",
+        "interested",
+        "interest",
+        "liked",
+        "good response",
+        "agreed",
+        "appreciated"
+    ]
 
-    if any(word in text_lower for word in positive_words):
-        return "Positive"
+    negative_words = [
+        "negative",
+        "not interested",
+        "declined",
+        "rejected",
+        "unhappy",
+        "refused"
+    ]
 
     if any(word in text_lower for word in negative_words):
         return "Negative"
 
+    if any(word in text_lower for word in positive_words):
+        return "Positive"
+
     return "Neutral"
 
 
-# ---------------------------
-# 3️⃣ Followup Suggestion
-# ---------------------------
-def followup_suggestion_tool(text: str):
-
+def followup_suggestion_tool(text: str) -> str:
     text_lower = text.lower()
-
-    if "brochure" in text_lower:
-        return "Send product brochure"
 
     if "clinical" in text_lower or "trial" in text_lower:
         return "Share clinical trial data"
 
-    if "demo" in text_lower:
+    if "brochure" in text_lower:
+        return "Send product brochure"
+
+    if "demo" in text_lower or "demonstration" in text_lower:
         return "Schedule product demonstration"
+
+    if "sample" in text_lower or "samples" in text_lower:
+        return "Arrange product samples"
 
     return "Follow up during next doctor visit"
 
 
-# ---------------------------
-# 4️⃣ Log Interaction Tool
-# ---------------------------
 def log_interaction_tool(data: dict):
     return data
 
 
-# ---------------------------
-# 5️⃣ Edit Interaction Tool
-# ---------------------------
 def edit_interaction_tool(current_data: dict, update: dict):
-
     current_data.update(update)
-
     return current_data

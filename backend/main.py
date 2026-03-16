@@ -31,6 +31,9 @@ class InteractionUpdate(BaseModel):
     followup: str
 
 
+current_interaction_id = None
+
+
 @app.get("/")
 def root():
     return {"message": "AI CRM Backend Running"}
@@ -38,13 +41,42 @@ def root():
 
 @app.post("/process")
 def process_interaction_api(request: InteractionRequest):
+    global current_interaction_id
 
+    text_lower = request.text.lower().strip()
     data = process_interaction(request.text)
 
-    interaction_id = save_interaction(data)
+    is_correction = (
+        text_lower.startswith("sorry")
+        or text_lower.startswith("name")
+        or "name is" in text_lower
+        or text_lower.startswith("time")
+        or "time is" in text_lower
+        or text_lower.startswith("date")
+        or "date is" in text_lower
+    )
 
-    data["id"] = interaction_id
+    if current_interaction_id is None:
+        interaction_id = save_interaction(data)
+        current_interaction_id = interaction_id
+        data["id"] = interaction_id
+        return data
 
+    if is_correction:
+        update_interaction(
+            current_interaction_id,
+            data.get("doctor_name", ""),
+            data.get("date", ""),
+            data.get("time", ""),
+            data.get("interaction_type", ""),
+            data.get("topics", ""),
+            data.get("sentiment", ""),
+            data.get("followup", "")
+        )
+        data["id"] = current_interaction_id
+        return data
+
+    data["id"] = current_interaction_id
     return data
 
 
@@ -55,12 +87,12 @@ def get_all_interactions():
 
 @app.put("/update/{interaction_id}")
 def update_interaction_api(interaction_id: int, update: InteractionUpdate):
-
     update_interaction(
         interaction_id,
         update.doctor_name,
         update.date,
         update.time,
+        update.interaction_type,
         update.topics,
         update.sentiment,
         update.followup

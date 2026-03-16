@@ -9,8 +9,6 @@ from backend.tools import (
     followup_suggestion_tool
 )
 
-from backend.database import save_interaction
-
 
 class InteractionState(TypedDict):
     text: str
@@ -55,89 +53,94 @@ last_interaction = {}
 # -------- EXTRACTION FUNCTIONS --------
 
 def extract_doctor(text):
-
-    match = re.search(r"Dr\.?\s+[A-Za-z]+", text, re.IGNORECASE)
+    match = re.search(
+        r'\b(Dr\.?\s+[A-Za-z]+(?:\s+[A-Za-z]+)?)\b(?=\s+(?:on|at|for|to|regarding)\b|[.,]|$)',
+        text,
+        re.IGNORECASE
+    )
 
     if match:
-        return match.group(0)
+        doctor = match.group(1).strip()
+        doctor = doctor.replace("Dr.", "Dr")
+        return doctor
 
     return "Unknown"
 
 
 def extract_time(text):
-
-    match = re.search(r"\b\d{1,2}\s?(am|pm)\b", text.lower())
+    match = re.search(
+        r'\b(\d{1,2})(?::(\d{2}))?\s*(am|pm)\b',
+        text,
+        re.IGNORECASE
+    )
 
     if match:
-        time_str = match.group(0)
+        hour = int(match.group(1))
+        minute = int(match.group(2)) if match.group(2) else 0
+        meridiem = match.group(3).lower()
 
-        hour = int(re.search(r"\d+", time_str).group())
-
-        if "pm" in time_str and hour != 12:
+        if meridiem == "pm" and hour != 12:
             hour += 12
-
-        if "am" in time_str and hour == 12:
+        if meridiem == "am" and hour == 12:
             hour = 0
 
-        return f"{hour:02d}:00"
+        return f"{hour:02d}:{minute:02d}"
 
     return ""
 
 
 def extract_date(text):
-
     try:
+        patterns = [
+            r'\b\d{1,2}[/-]\d{1,2}[/-]\d{2,4}\b',
+            r'\b\d{1,2}\s+[A-Za-z]+\s+\d{4}\b',
+            r'\b[A-Za-z]+\s+\d{1,2},\s*\d{4}\b'
+        ]
 
-        date = parser.parse(text, fuzzy=True)
+        for pattern in patterns:
+            match = re.search(pattern, text, re.IGNORECASE)
+            if match:
+                date = parser.parse(match.group(0), dayfirst=True)
+                year = date.year
 
-        return date.strftime("%Y-%m-%d")
+                if year < 2000 or year > 2100:
+                    return ""
 
+                return date.strftime("%Y-%m-%d")
+
+        return ""
     except:
-
         return ""
 
 
 # -------- MAIN FUNCTION --------
 
 def process_interaction(text: str):
-
     global last_interaction
 
     text_lower = text.lower()
 
     # -------- EDIT DOCTOR --------
     if "name" in text_lower and "dr" in text_lower:
-
         doctor = extract_doctor(text)
-
         last_interaction["doctor_name"] = doctor
-
         return last_interaction
-
 
     # -------- EDIT TIME --------
     if "time" in text_lower:
-
         time = extract_time(text)
-
         if time:
             last_interaction["time"] = time
-
         return last_interaction
 
-
     # -------- NEW INTERACTION --------
-
     result = graph.invoke({"text": text})
 
     doctor = extract_doctor(text)
-
     date = extract_date(text)
-
     time = extract_time(text)
 
     data = {
-
         "doctor_name": doctor,
         "date": date,
         "time": time,
@@ -145,11 +148,7 @@ def process_interaction(text: str):
         "topics": result.get("summary"),
         "sentiment": result.get("sentiment"),
         "followup": result.get("followup")
-
     }
 
     last_interaction = data
-
-    save_interaction(data)
-
     return data
