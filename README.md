@@ -65,12 +65,14 @@ A key highlight of this project is its **correction-aware workflow**. If a user 
 
 ```text
 I met Dr Shivani on 10 April 2026 at 9:30 AM to discuss diabetes therapy and shared a brochure.
+```
 
 ### Example Corrections
 
 ```text
 sorry name is Dr Disha
 time is 4 pm
+```
 
 ---
 
@@ -120,3 +122,83 @@ AI-CRM-HCP-Interaction-Logger-API/
 ├── crm.db
 └── README.md
 ```
+
+---
+
+## How to Run the Project
+
+### Backend
+
+Run the backend server:
+
+```bash
+uvicorn backend.main:app --reload
+```
+
+If needed, you can also use:
+
+```bash
+python -m uvicorn backend.main:app --reload
+```
+
+Backend will run on:
+
+```text
+http://127.0.0.1:8000
+```
+
+### Frontend
+
+Move to frontend folder and start the React app:
+
+```bash
+cd frontend
+npm install
+npm start
+```
+
+Frontend will usually run on:
+
+```text
+http://localhost:3000
+```
+
+---
+
+## Sample Test Flow
+
+1. Start backend and frontend
+2. Enter a natural language interaction in the UI
+3. Verify the form auto-fills
+4. Send a correction message like:
+   - `name is Dr Vidya`
+   - `time is 2 pm`
+5. Click update interaction
+6. Check `/interactions` or Swagger docs to confirm:
+   - same record updated
+   - no duplicate row created
+
+---
+
+## Learning Outcomes
+
+This project helped me strengthen my understanding of:
+
+- Full-stack development
+- API integration
+- Backend debugging
+- AI workflow design
+- Natural language data extraction
+- Data consistency handling in CRUD workflows
+
+---
+
+## Future Improvements
+
+- Authentication and user-based interaction history
+- Better entity extraction and validation
+- More robust date/time parsing
+- Dashboard for analytics and reporting
+- Production deployment
+
+---
